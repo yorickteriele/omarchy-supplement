@@ -2,12 +2,10 @@
 
 echo "Starting Installation"
 
-for file in installs/*; do
-  if [ -x "$file" ] && [ ! -d "$file" ]; then
-    echo "$file"
-    "$file"
-  else
-    echo "Not an executable $file"
-  fi
-done
+./apps/install.sh
+
+echo "Removing Unwanted Webapps"
+
+./webapps/remove.sh
+
 
