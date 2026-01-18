@@ -14,8 +14,7 @@ echo "Starting Webapps Installation"
 echo "Starting Webapps Removal"
 ./webapps/remove.sh
 # Syncing the Submodules
-git submodule update --init --recursive
-git submodule foreach 'git fetch && git checkout main && git pull'
+./update-repos.sh
 
 # Setup configuration
 echo "Starting Configuration"
