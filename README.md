@@ -6,7 +6,7 @@ applications, dotfiles, and development tools for use.
 Repository structure
 
 - `apps/` — installers and removers for desktop apps and utilities.
-  - `installs/` — individual install scripts (e.g. `firefox.sh`, `gitkraken.sh`).
+  - `installs/` — individual install scripts (e.g. `firefox.sh`, `gitkraken.sh`, `stow.sh`).
   - `removes/` — individual uninstall scripts.
 - `dotfiles/` — (submodule) user configuration and helpers for dotfiles management.
 - `neovim/` — (submodule) Neovim configuration and plugins.
