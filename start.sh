@@ -20,3 +20,4 @@ git submodule foreach 'git fetch && git checkout main && git pull'
 # Setup configuration
 echo "Starting Configuration"
 ./dotfiles/install.sh
+hyprctl reload
