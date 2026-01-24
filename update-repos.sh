@@ -1,7 +1,7 @@
 #!/bin/bash
 repos=(
   "dotfiles-https://github.com/yorickteriele/dotfiles.git"
-  "dotfiles-https://github.com/yorickteriele/YorVim.git"
+  "dotfiles/YorVim-https://github.com/yorickteriele/YorVim.git"
 )
 
 for repo_info in "${repos[@]}"; do
