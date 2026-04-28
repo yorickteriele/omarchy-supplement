@@ -7,7 +7,6 @@ DEFAULT_WEBAPPS=(
   "Google Contacts"
   "Google Messages"
   "YouTube"
-  "GitHub"
   "X"
   "Figma"
   "Zoom"
@@ -18,4 +17,3 @@ for app in "${DEFAULT_WEBAPPS[@]}"; do
   echo "Removing $app"
   omarchy-webapp-remove "$app"
 done
-

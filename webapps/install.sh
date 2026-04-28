@@ -1,3 +1,7 @@
 #!/bin/sh
 
-echo "Not Implemented"
+echo "Installing webapps"
+
+WEBAPPS=(
+  ""
+)
