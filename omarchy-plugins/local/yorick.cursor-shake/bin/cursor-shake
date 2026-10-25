@@ -1,0 +1,139 @@
+#!/usr/bin/env python3
+"""Enlarge the cursor while the mouse is shaken, like macOS's
+shake-to-locate: size tracks a "shake energy" that direction reversals and
+speed feed and that decays every tick, so it grows continuously the more
+you shake and shrinks itself back the moment you stop. No fixed on/off
+threshold to trip over."""
+import os
+import subprocess
+import time
+
+CONF = os.path.expanduser("~/.config/omarchy/cursor-shake.conf")
+
+
+def read_conf():
+    cfg = {}
+    if os.path.isfile(CONF):
+        for line in open(CONF):
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            k, v = line.split("=", 1)
+            cfg[k.strip()] = v.strip()
+    return cfg
+
+
+_cfg = read_conf()
+
+
+def setting(key, default):
+    return type(default)(_cfg.get(key, default))
+
+
+# Tunables — override any of these in ~/.config/omarchy/cursor-shake.conf
+# (KEY=value, one per line).
+IDLE_INTERVAL = setting("IDLE_INTERVAL", 0.08)      # s between polls, cursor still
+ACTIVE_INTERVAL = setting("ACTIVE_INTERVAL", 0.015)  # s between polls, cursor moving
+ACTIVE_HOLD = setting("ACTIVE_HOLD", 0.4)            # s to stay in fast-poll after a move
+MIN_DELTA = setting("MIN_DELTA", 2)                  # px; smaller moves are ignored as noise
+DECAY = setting("DECAY", 0.82)                       # energy *= this, every tick
+REVERSAL_GAIN = setting("REVERSAL_GAIN", 60.0)       # energy added per direction flip
+SPEED_GAIN = setting("SPEED_GAIN", 0.07)             # energy added per px/tick of raw speed
+MAX_ENERGY = setting("MAX_ENERGY", 260.0)            # energy needed to hit max size
+GROW_FACTOR = setting("GROW_FACTOR", 3.2)            # cursor grows to base size * this
+STEPS = setting("STEPS", 6)                          # discrete sizes between base and max
+STEP_COOLDOWN = setting("STEP_COOLDOWN", 0.06)       # min seconds between cursor swaps
+
+
+def sh(*args):
+    return subprocess.run(args, capture_output=True, text=True).stdout.strip()
+
+
+def gsetting(key):
+    out = sh("gsettings", "get", "org.gnome.desktop.interface", key)
+    return out.strip("'") if out else ""
+
+
+theme = os.environ.get("XCURSOR_THEME") or gsetting("cursor-theme") or "default"
+base_size = int(os.environ.get("XCURSOR_SIZE") or gsetting("cursor-size") or 24)
+max_size = int(round(base_size * GROW_FACTOR))
+
+applied_step = 0
+last_apply_t = 0.0
+
+
+def size_for_step(step):
+    if step <= 0:
+        return base_size
+    return base_size + round((max_size - base_size) * step / STEPS)
+
+
+def apply_step(step, force=False):
+    global applied_step, last_apply_t
+    if step == applied_step:
+        return
+    now = time.monotonic()
+    if not force and now - last_apply_t < STEP_COOLDOWN:
+        return
+    subprocess.run(
+        ["hyprctl", "setcursor", theme, str(size_for_step(step))],
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+    )
+    applied_step = step
+    last_apply_t = now
+
+
+def cursorpos():
+    out = sh("hyprctl", "cursorpos")
+    if "," not in out:
+        return None
+    x, y = out.split(",", 1)
+    try:
+        return int(x), int(y)
+    except ValueError:
+        return None
+
+
+prev = None
+prev_dir = [0, 0]
+energy = 0.0
+last_move_t = 0.0
+
+try:
+    while True:
+        pos = cursorpos()
+        now = time.monotonic()
+
+        if pos is not None:
+            if prev is not None:
+                dx, dy = pos[0] - prev[0], pos[1] - prev[1]
+                adx, ady = abs(dx), abs(dy)
+                if adx >= MIN_DELTA or ady >= MIN_DELTA:
+                    last_move_t = now
+                    reversed_ = False
+                    if dx:
+                        d = 1 if dx > 0 else -1
+                        if prev_dir[0] and d != prev_dir[0]:
+                            reversed_ = True
+                        prev_dir[0] = d
+                    if dy:
+                        d = 1 if dy > 0 else -1
+                        if prev_dir[1] and d != prev_dir[1]:
+                            reversed_ = True
+                        prev_dir[1] = d
+                    energy += (adx + ady) * SPEED_GAIN
+                    if reversed_:
+                        energy += REVERSAL_GAIN
+                    energy = min(energy, MAX_ENERGY)
+            prev = pos
+
+        energy *= DECAY
+        if energy < 0.5:
+            energy = 0.0
+
+        apply_step(round((energy / MAX_ENERGY) * STEPS))
+
+        active = now - last_move_t < ACTIVE_HOLD
+        time.sleep(ACTIVE_INTERVAL if active else IDLE_INTERVAL)
+finally:
+    apply_step(0, force=True)

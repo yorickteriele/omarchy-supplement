@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "id": "yorick.cursor-shake",
+  "name": "Cursor Shake",
+  "version": "1.0.0",
+  "author": "Yorick",
+  "description": "Enlarges the cursor when you shake the mouse, like macOS shake-to-locate",
+  "kinds": [
+    "service"
+  ],
+  "entryPoints": {
+    "service": "Service.qml"
+  }
+}

@@ -10,6 +10,7 @@ Repository structure
   - `removes/` — individual uninstall scripts.
 - `dotfiles/` — (submodule) user configuration and helpers for dotfiles management.
 - `neovim/` — (submodule) Neovim configuration and plugins.
+- `omarchy-plugins/` — installer/remover for omarchy-shell plugins (`plugins.sh` holds the id -> git url map).
 - `webapps/` — scripts to install or uninstall web-oriented tools and services.
 - `start.sh` — launcher script.
 

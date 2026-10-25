@@ -7,6 +7,10 @@ echo "Starting App Installation"
 echo "Starting App Removal"
 ./apps/remove.sh
 
+# Omarchy plugins
+echo "Starting Omarchy Plugin Installation"
+./omarchy-plugins/install.sh
+
 # Webapps
 echo "Starting Webapps Installation"
 ./webapps/install.sh
